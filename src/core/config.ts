@@ -29,6 +29,11 @@ export interface GBrainConfig {
   database_path?: string;
   openai_api_key?: string;
   anthropic_api_key?: string;
+  embedding_provider?: 'openai' | 'ollama';
+  embedding_model?: string;
+  embedding_dimensions?: number;
+  embedding_base_url?: string;
+  ollama_base_url?: string;
   /**
    * Optional storage backend config (S3/Supabase/local). Shape matches
    * `StorageConfig` in `./storage.ts`. Typed as `unknown` here to avoid

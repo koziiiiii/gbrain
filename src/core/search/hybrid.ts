@@ -13,6 +13,7 @@ import type { BrainEngine } from '../engine.ts';
 import { MAX_SEARCH_LIMIT, clampSearchLimit } from '../engine.ts';
 import type { SearchResult, SearchOpts } from '../types.ts';
 import { embed } from '../embedding.ts';
+import { ensureEmbeddingSchema, hasEmbeddingSupport } from '../embedding-config.ts';
 import { dedupResults } from './dedup.ts';
 import { autoDetectDetail } from './intent.ts';
 
@@ -77,10 +78,9 @@ export async function hybridSearch(
   // Run keyword search (always available, no API key needed)
   const keywordResults = await engine.searchKeyword(query, searchOpts);
 
-  // Skip vector search entirely if no OpenAI key is configured
-  if (!process.env.OPENAI_API_KEY) {
-    // Apply backlink boost in keyword-only path too. One getBacklinkCounts query
-    // per search request; not N+1.
+  // Skip vector search entirely if the active embedding provider is unavailable.
+  // Apply backlink boost in the keyword-only path too so ranking remains useful.
+  if (!(await hasEmbeddingSupport(engine))) {
     if (keywordResults.length > 0) {
       try {
         const slugs = Array.from(new Set(keywordResults.map(r => r.slug)));
@@ -93,6 +93,8 @@ export async function hybridSearch(
     }
     return dedupResults(keywordResults).slice(offset, offset + limit);
   }
+
+  await ensureEmbeddingSchema(engine);
 
   // Determine query variants (optionally with expansion)
   // expandQuery already includes the original query in its return value,
@@ -111,7 +113,7 @@ export async function hybridSearch(
   let vectorLists: SearchResult[][] = [];
   let queryEmbedding: Float32Array | null = null;
   try {
-    const embeddings = await Promise.all(queries.map(q => embed(q)));
+    const embeddings = await Promise.all(queries.map(q => embed(q, engine)));
     queryEmbedding = embeddings[0];
     vectorLists = await Promise.all(
       embeddings.map(emb => engine.searchVector(emb, searchOpts)),

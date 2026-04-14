@@ -265,6 +265,7 @@ export interface BrainEngine {
 
   // Migration support
   runMigration(version: number, sql: string): Promise<void>;
+  getEmbeddingDimensions(): Promise<number | null>;
   getChunksWithEmbeddings(slug: string): Promise<Chunk[]>;
 
   // Raw SQL (for Minions job queue and other internal modules)
