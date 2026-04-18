@@ -101,13 +101,12 @@ export function isSyncable(path: string): boolean {
  */
 export function slugifySegment(segment: string): string {
   return segment
-    .normalize('NFD')                     // Decompose accented chars
-    .replace(/[\u0300-\u036f]/g, '')      // Strip accent marks
+    .normalize('NFC')                           // Compose Unicode so letters like が and é stay intact
     .toLowerCase()
-    .replace(/[^a-z0-9.\s_-]/g, '')      // Keep alphanumeric, dots, spaces, underscores, hyphens
-    .replace(/[\s]+/g, '-')              // Spaces → hyphens
-    .replace(/-+/g, '-')                 // Collapse multiple hyphens
-    .replace(/^-|-$/g, '');              // Strip leading/trailing hyphens
+    .replace(/[^\p{L}\p{N}.\s_-]/gu, '')      // Keep letters/numbers across scripts, dots, spaces, underscores, hyphens
+    .replace(/[\s]+/g, '-')                    // Spaces → hyphens
+    .replace(/-+/g, '-')                       // Collapse multiple hyphens
+    .replace(/^-|-$/g, '');                    // Strip leading/trailing hyphens
 }
 
 /**

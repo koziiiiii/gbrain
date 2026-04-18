@@ -147,6 +147,15 @@ describe('pathToSlug', () => {
   test('strips special characters', () => {
     expect(pathToSlug('notes/meeting (march 2024).md')).toBe('notes/meeting-march-2024');
   });
+
+  test('preserves Japanese characters in path segments', () => {
+    expect(pathToSlug('Memo/掃除のクリーナー材料使い分け.md')).toBe('memo/掃除のクリーナー材料使い分け');
+    expect(pathToSlug('Memo/芸能人プロンプト.md')).toBe('memo/芸能人プロンプト');
+  });
+
+  test('does not collapse distinct Japanese filenames to the same slug', () => {
+    expect(pathToSlug('Memo/掃除のクリーナー材料使い分け.md')).not.toBe(pathToSlug('Memo/芸能人プロンプト.md'));
+  });
 });
 
 describe('isSyncable edge cases', () => {
